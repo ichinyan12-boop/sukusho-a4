@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スクショ・写真をA4に並べて印刷（順番どおり・切れない・無料）</title>
+<meta name="description" content="スマホのスクリーンショットや写真を、選んだ順・撮影日時順にA4へ2枚・4枚・6枚・9枚と並べて印刷、またはPDFにできる無料ツール。画像は切れずにそのまま入り、日時や番号も添えられます。LINEのスクショを証拠として提出する時やコンビニ印刷にも。画像は送信されず、この端末の中だけで処理します。">
+<meta property="og:title" content="スクショ・写真をA4に並べて印刷（無料）">
+<meta property="og:description" content="スクショや写真を、順番どおり・切らずにA4へ並べて印刷・PDF化。画像は送信されません。">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='2' width='22' height='28' rx='2' fill='%23fff' stroke='%23246' stroke-width='2'/%3E%3Crect x='8' y='6' width='7' height='9' fill='%2369c'/%3E%3Crect x='17' y='6' width='7' height='9' fill='%2369c'/%3E%3Crect x='8' y='17' width='7' height='9' fill='%2369c'/%3E%3Crect x='17' y='17' width='7' height='9' fill='%2369c'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--fg:#1d2330;--sub:#5b6474;--line:#d9dde4;--accent:#1f6feb;--accent-fg:#fff;--warn:#b42318;--sheet:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#15181d;--card:#1f242b;--fg:#e8ebf0;--sub:#a3acb9;--line:#353c46;--accent:#4c8dff;--accent-fg:#fff;--warn:#ff8a7a;--sheet:#fff}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.35rem;line-height:1.4;margin:.4em 0 .2em}
+.lead{color:var(--sub);margin:0 0 1em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 0 14px}
+.card h2{font-size:1.05rem;margin:0 0 .6em}
+.step{display:inline-block;background:var(--accent);color:var(--accent-fg);border-radius:50%;width:1.6em;height:1.6em;text-align:center;line-height:1.6em;font-size:.85em;margin-right:.4em}
+button,.btn,select,input[type=text]{font:inherit}
+button,.btn{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:.55em .9em;cursor:pointer;min-height:44px}
+button.primary,.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+button:disabled{opacity:.45;cursor:default}
+.pick{display:block;width:100%;text-align:center;padding:1em;border:2px dashed var(--line);border-radius:10px;background:transparent}
+.pick.drag{border-color:var(--accent)}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 16px}
+.opts label{display:block;font-size:.9rem;color:var(--sub)}
+select,input[type=text]{width:100%;padding:.5em;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);min-height:44px}
+.check{display:flex;gap:.5em;align-items:center;color:var(--fg)!important;font-size:1rem!important;min-height:44px}
+.check input{width:20px;height:20px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}
+.thumb{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.thumb.sel{outline:3px solid var(--accent)}
+.thumb img{display:block;width:100%;height:120px;object-fit:contain;background:#888}
+.thumb .no{position:absolute;left:4px;top:4px;background:rgba(0,0,0,.65);color:#fff;font-size:.75rem;border-radius:4px;padding:0 5px}
+.thumb .tb{display:flex}
+.thumb .tb button{flex:1;min-height:36px;padding:0;border:0;border-top:1px solid var(--line);border-radius:0;font-size:.9rem}
+.thumb .tb button+button{border-left:1px solid var(--line)}
+.thumb .meta{font-size:.68rem;color:var(--sub);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hint{font-size:.85rem;color:var(--sub);margin:.4em 0 0}
+.err{color:var(--warn);font-size:.9rem}
+.pages{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px}
+.pages img{width:min(100%,300px);background:var(--sheet);box-shadow:0 1px 4px rgba(0,0,0,.25);border-radius:2px}
+.pages.land img{width:min(100%,420px)}
+.out{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;z-index:2}
+.out button{flex:1 1 140px;max-width:260px}
+.status{width:100%;text-align:center;font-size:.85rem;color:var(--sub)}
+details{margin:.4em 0}
+summary{cursor:pointer;font-weight:600}
+.faq p{margin:.3em 0 .8em}
+footer{color:var(--sub);font-size:.85rem;text-align:center;padding:16px 16px 90px}
+footer a{color:var(--sub)}
+#printArea{display:none}
+@media print{
+  @page{size:A4 portrait;margin:0}
+  body{background:#fff}
+  main,.out,footer{display:none!important}
+  #printArea{display:block}
+  #printArea img{display:block;width:210mm;height:297mm;page-break-after:always;break-after:page}
+  #printArea.land img{width:297mm;height:210mm}
+  #printArea img:last-child{page-break-after:auto;break-after:auto}
+}
+</style>
+<style id="pageSize">@media print{@page{size:A4 portrait;margin:0}}</style>
+</head>
+<body>
+<main>
+<h1>スクショ・写真をA4に並べて印刷</h1>
+<p class="lead">スマホのスクリーンショットや写真を、<b>順番どおり</b>・<b>切らずに</b>、A4に2枚〜9枚ずつ並べて印刷またはPDFにします。無料・登録なし。画像はどこにも送信されず、この端末の中だけで処理します。</p>
+
+<section class="card">
+  <h2><span class="step">1</span>画像を選ぶ</h2>
+  <label class="btn pick" id="pickLabel" for="file">ここを押して画像を選ぶ<br><small>（パソコンはここへドラッグでも可・何枚でも）</small></label>
+  <input type="file" id="file" accept="image/*" multiple>
+  <p class="hint">スマホでは、写真を<b>印刷したい順にタップ</b>して選ぶと、その順番で並びます。あとから追加・並べ替えもできます。</p>
+  <p class="err" id="err" hidden></p>
+</section>
+
+<section class="card" id="orderCard" hidden>
+  <h2><span class="step">2</span>順番を確かめる <small id="count" style="font-weight:normal;color:var(--sub)"></small></h2>
+  <div class="row">
+    <label style="flex:1 1 220px"><span class="hint" style="display:block;margin:0">並べ方</span>
+      <select id="sort">
+        <option value="pick">選んだ順</option>
+        <option value="name">ファイル名の順（数字も正しく）</option>
+        <option value="date">撮影・保存した日時の順</option>
+      </select></label>
+    <button id="reverse" type="button">逆の順にする</button>
+    <button id="addMore" type="button">画像を追加</button>
+    <button id="clear" type="button">全部消す</button>
+  </div>
+  <p class="hint">入れ替えたい時は、画像を1枚タップして選び、もう1枚をタップするとその位置へ移ります。左右の矢印で1つずつ動かすこともできます。</p>
+  <div class="thumbs" id="thumbs"></div>
+</section>
+
+<section class="card" id="layoutCard" hidden>
+  <h2><span class="step">3</span>並べ方を決める</h2>
+  <div class="opts">
+    <label>1枚の紙に何枚
+      <select id="per">
+        <option value="1x1">1枚（大きく）</option>
+        <option value="2x1" selected>2枚（横に並べる）</option>
+        <option value="1x2">2枚（縦に並べる）</option>
+        <option value="3x1">3枚（横に並べる）</option>
+        <option value="2x2">4枚（2×2）</option>
+        <option value="3x2">6枚（横3×縦2）</option>
+        <option value="2x3">6枚（横2×縦3）</option>
+        <option value="4x2">8枚（横4×縦2）</option>
+        <option value="3x3">9枚（3×3）</option>
+      </select></label>
+    <label>紙の向き
+      <select id="orient">
+        <option value="auto">おまかせ（大きく入る方）</option>
+        <option value="p">縦（A4縦）</option>
+        <option value="l">横（A4横）</option>
+      </select></label>
+    <label>画像の下に添える文字
+      <select id="caption">
+        <option value="none">なし</option>
+        <option value="num" selected>通し番号（1, 2, 3…）</option>
+        <option value="date">日時</option>
+        <option value="numdate">通し番号と日時</option>
+        <option value="name">ファイル名</option>
+      </select></label>
+    <label>余白
+      <select id="margin">
+        <option value="6">せまい（6mm）</option>
+        <option value="10" selected>ふつう（10mm）</option>
+        <option value="18">広い（18mm・とじしろ用）</option>
+      </select></label>
+    <label>紙の上に入れる見出し（なくても可）
+      <input type="text" id="title" placeholder="例: LINEのやりとり（2026年10月）"></label>
+    <label>画質
+      <select id="dpi">
+        <option value="150">標準（ファイルが軽い）</option>
+        <option value="220" selected>きれい</option>
+        <option value="300">とてもきれい（重い）</option>
+      </select></label>
+    <div>
+      <label class="check"><input type="checkbox" id="border" checked>画像に細い枠線</label>
+      <label class="check"><input type="checkbox" id="pageno" checked>ページ番号（1 / 3）</label>
+    </div>
+  </div>
+  <p class="hint" id="dateNote" hidden>日時は写真に記録された撮影日時です。無い場合はファイルの保存日時を使います（スマホから選んだスクショでは、選んだ日時になることがあります）。</p>
+</section>
+
+<section class="card" id="previewCard" hidden>
+  <h2><span class="step">4</span>仕上がりを見る <small id="pageCount" style="font-weight:normal;color:var(--sub)"></small></h2>
+  <div class="pages" id="pages"></div>
+</section>
+
+<section class="card faq">
+  <h2>よくある質問</h2>
+  <details><summary>画像の上下が切れませんか？</summary><p>切れません。画像は縦横の比率を保ったまま、枠の中に収まる一番大きなサイズで入ります（余った所は白になります）。縦長のスクショは「2枚（横に並べる）」や「4枚」が大きく入ります。</p></details>
+  <details><summary>LINEのスクショを証拠として印刷したい</summary><p>「並べ方」を「選んだ順」か「撮影・保存した日時の順」にし、「画像の下に添える文字」で通し番号と日時を入れると、どの画像か指し示しやすくなります。見出しに「甲第◯号証」などを入れることもできます。提出先の決まり（枚数・書式）は、提出先や弁護士に確認してください。</p></details>
+  <details><summary>コンビニで印刷したい</summary><p>「PDFを保存」で作ったPDFを、セブン-イレブンの「ネットプリント」や、ローソン・ファミリーマートの「ネットワークプリント」のアプリに登録すると、店のコピー機で印刷できます。用紙はA4を選んでください。</p></details>
+  <details><summary>iPhoneで「印刷」を押しても家のプリンターが出ない</summary><p>AirPrintに対応していないプリンターは、メーカーのアプリが必要です。その場合は「PDFを保存」で作ったPDFを、メーカーのアプリやコンビニ印刷で開いてください。</p></details>
+  <details><summary>画像はどこかに送られますか？</summary><p>送られません。このページは画像を読み込んで並べる処理をすべてお使いの端末の中で行い、サーバーへは何も送りません。ページを閉じると消えます。</p></details>
+  <details><summary>HEIC（iPhoneの写真）が読み込めない</summary><p>iPhoneのSafariやChromeから写真を選ぶと、自動でJPEGに変換されるので読み込めます。パソコンでHEICファイルを直接選んだ時に読み込めない場合は、写真アプリでJPEGに書き出してからお試しください。</p></details>
+</section>
+</main>
+
+<div class="out" id="out" hidden>
+  <button class="primary" id="print" type="button">印刷する</button>
+  <button class="primary" id="pdf" type="button">PDFを保存</button>
+  <div class="status" id="status"></div>
+</div>
+
+<footer>
+  無料で使えます。画像は送信されません。<br>
+  <a href="https://github.com/ichinyan12-boop/sukusho-a4">ソースコードと不具合の報告（GitHub）</a>
+</footer>
+
+<div id="printArea"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const MM_PER_IN = 25.4;
+let items = [];      // {id, file, name, time, timeSrc, url, w, h, pick}
+let seq = 0;
+let selected = null; // index for tap-to-move
+let pageUrls = [];
+let renderToken = 0;
+
+// ---------- reading files ----------
+$('file').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+$('addMore').addEventListener('click', () => $('file').click());
+const pick = $('pickLabel');
+['dragenter','dragover'].forEach(t => pick.addEventListener(t, e => { e.preventDefault(); pick.classList.add('drag'); }));
+['dragleave','drop'].forEach(t => pick.addEventListener(t, e => { e.preventDefault(); pick.classList.remove('drag'); }));
+pick.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+
+async function addFiles(fileList) {
+  const files = [...fileList].filter(f => f.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|gif|webp|bmp)$/i.test(f.name));
+  if (!files.length) return;
+  const bad = [];
+  setStatus('読み込み中…');
+  for (const file of files) {
+    try {
+      const bmp = await decode(file);
+      const t = await readDate(file);
+      const url = await thumbUrl(bmp);
+      items.push({ id: ++seq, file, name: file.name, time: t.time, timeSrc: t.src, url, w: bmp.width, h: bmp.height, pick: seq });
+      bmp.close && bmp.close();
+    } catch (err) {
+      bad.push(file.name);
+    }
+  }
+  const e = $('err');
+  e.hidden = !bad.length;
+  e.textContent = bad.length ? `読み込めなかった画像: ${bad.join('、')}（HEICの場合はJPEGにしてからお試しください）` : '';
+  applySort();
+}
+
+async function decode(file) {
+  if (window.createImageBitmap) {
+    try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch (e) { /* fall through */ }
+  }
+  return await new Promise((res, rej) => {
+    const img = new Image();
+    const u = URL.createObjectURL(file);
+    img.onload = () => { res({ width: img.naturalWidth, height: img.naturalHeight, img, close() { URL.revokeObjectURL(u); } }); };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('decode')); };
+    img.src = u;
+  });
+}
+const src = b => b.img || b;
+
+async function thumbUrl(bmp) {
+  const s = Math.min(1, 240 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(bmp.width * s)); c.height = Math.max(1, Math.round(bmp.height * s));
+  c.getContext('2d').drawImage(src(bmp), 0, 0, c.width, c.height);
+  return await new Promise(r => c.toBlob(b => r(URL.createObjectURL(b)), 'image/jpeg', .8));
+}
+
+// Date: EXIF DateTimeOriginal (JPEG APP1 / PNG eXIf), XMP DateCreated, else lastModified.
+async function readDate(file) {
+  try {
+    const buf = new Uint8Array(await file.slice(0, 256 * 1024).arrayBuffer());
+    const d = exifDate(buf) || xmpDate(buf);
+    if (d) return { time: d, src: 'exif' };
+  } catch (e) { /* ignore */ }
+  return { time: file.lastModified || 0, src: 'file' };
+}
+function exifDate(b) {
+  let tiff = -1;
+  if (b[0] === 0xFF && b[1] === 0xD8) {
+    let p = 2;
+    while (p + 4 < b.length && b[p] === 0xFF) {
+      const m = b[p + 1], len = (b[p + 2] << 8) | b[p + 3];
+      if (m === 0xE1 && b[p + 4] === 0x45 && b[p + 5] === 0x78 && b[p + 6] === 0x69 && b[p + 7] === 0x66) { tiff = p + 10; break; }
+      if (m === 0xDA) break;
+      p += 2 + len;
+    }
+  } else if (b[0] === 0x89 && b[1] === 0x50) {
+    let p = 8;
+    while (p + 8 < b.length) {
+      const len = ((b[p] << 24) | (b[p + 1] << 16) | (b[p + 2] << 8) | b[p + 3]) >>> 0;
+      const type = String.fromCharCode(b[p + 4], b[p + 5], b[p + 6], b[p + 7]);
+      if (type === 'eXIf') { tiff = p + 8; break; }
+      if (type === 'IDAT' || type === 'IEND') break;
+      p += 12 + len;
+    }
+  }
+  if (tiff < 0 || tiff + 8 > b.length) return 0;
+  const le = b[tiff] === 0x49;
+  const u16 = o => le ? b[o] | (b[o + 1] << 8) : (b[o] << 8) | b[o + 1];
+  const u32 = o => (le ? (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) : ((b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3])) >>> 0;
+  const readStr = (o, n) => { let s = ''; for (let i = 0; i < n && tiff + o + i < b.length; i++) { const c = b[tiff + o + i]; if (!c) break; s += String.fromCharCode(c); } return s; };
+  let found = { orig: '', base: '' };
+  const walk = (ifd, depth) => {
+    if (depth > 2 || tiff + ifd + 2 > b.length) return;
+    const n = u16(tiff + ifd);
+    for (let i = 0; i < n; i++) {
+      const e = tiff + ifd + 2 + i * 12;
+      if (e + 12 > b.length) return;
+      const tag = u16(e);
+      if (tag === 0x8769) walk(u32(e + 8), depth + 1);
+      else if (tag === 0x9003) found.orig = readStr(u32(e + 8), 19);
+      else if (tag === 0x0132) found.base = readStr(u32(e + 8), 19);
+    }
+  };
+  walk(u32(tiff + 4), 0);
+  return parseExifStr(found.orig || found.base);
+}
+function parseExifStr(s) {
+  const m = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/.exec(s || '');
+  return m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime() : 0;
+}
+function xmpDate(b) {
+  const s = new TextDecoder('latin1').decode(b);
+  const m = /(?:photoshop:DateCreated|exif:DateTimeOriginal|xmp:CreateDate)(?:="|>)(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(s);
+  return m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)).getTime() : 0;
+}
+
+// ---------- order ----------
+const collator = new Intl.Collator('ja', { numeric: true, sensitivity: 'base' });
+$('sort').addEventListener('change', applySort);
+$('reverse').addEventListener('click', () => { items.reverse(); refresh(); });
+$('clear').addEventListener('click', () => {
+  items.forEach(it => URL.revokeObjectURL(it.url));
+  items = []; selected = null; refresh();
+});
+function applySort() {
+  const v = $('sort').value;
+  if (v === 'pick') items.sort((a, b) => a.pick - b.pick);
+  if (v === 'name') items.sort((a, b) => collator.compare(a.name, b.name) || a.pick - b.pick);
+  if (v === 'date') items.sort((a, b) => a.time - b.time || collator.compare(a.name, b.name));
+  refresh();
+}
+function move(from, to) {
+  if (to < 0 || to >= items.length || from === to) return;
+  const [it] = items.splice(from, 1);
+  items.splice(to, 0, it);
+  refresh();
+}
+
+function fmtDate(t) {
+  if (!t) return '';
+  const d = new Date(t), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function refresh() {
+  const has = items.length > 0;
+  ['orderCard', 'layoutCard', 'previewCard', 'out'].forEach(id => $(id).hidden = !has);
+  $('count').textContent = has ? `${items.length}枚` : '';
+  $('dateNote').hidden = !items.some(it => it.timeSrc === 'file');
+  const box = $('thumbs');
+  box.textContent = '';
+  items.forEach((it, i) => {
+    const d = document.createElement('div');
+    d.className = 'thumb' + (selected === i ? ' sel' : '');
+    d.draggable = true;
+    d.innerHTML = `<span class="no">${i + 1}</span><img alt=""><div class="meta"></div><div class="tb"><button type="button" aria-label="前へ">←</button><button type="button" aria-label="消す">×</button><button type="button" aria-label="後へ">→</button></div>`;
+    d.querySelector('img').src = it.url;
+    d.querySelector('.meta').textContent = fmtDate(it.time) || it.name;
+    d.querySelector('.meta').title = it.name;
+    const [l, x, r] = d.querySelectorAll('button');
+    l.onclick = () => { selected = null; move(i, i - 1); };
+    r.onclick = () => { selected = null; move(i, i + 1); };
+    x.onclick = () => { URL.revokeObjectURL(it.url); items.splice(i, 1); selected = null; refresh(); };
+    d.querySelector('img').onclick = () => {
+      if (selected === null) { selected = i; refresh(); }
+      else { const s = selected; selected = null; s === i ? refresh() : move(s, i); }
+    };
+    d.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', String(i)); });
+    d.addEventListener('dragover', e => e.preventDefault());
+    d.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); const s = +e.dataTransfer.getData('text/plain'); if (!isNaN(s)) move(s, i); });
+    box.appendChild(d);
+  });
+  schedulePreview();
+}
+
+// ---------- layout ----------
+['per', 'orient', 'caption', 'margin', 'border', 'pageno', 'dpi'].forEach(id => $(id).addEventListener('change', schedulePreview));
+$('title').addEventListener('input', schedulePreview);
+
+function settings() {
+  const [cols, rows] = $('per').value.split('x').map(Number);
+  return {
+    cols, rows,
+    orient: $('orient').value,
+    caption: $('caption').value,
+    margin: +$('margin').value,
+    title: $('title').value.trim(),
+    border: $('border').checked,
+    pageno: $('pageno').checked,
+    dpi: +$('dpi').value,
+  };
+}
+
+// Decide portrait or landscape: the one where the images come out larger on average.
+function chooseOrient(s) {
+  if (s.orient !== 'auto') return s.orient;
+  const score = o => {
+    const g = geometry(s, o);
+    let sum = 0;
+    for (const it of items) sum += Math.min(g.cellW / it.w, g.cellH / it.h) ** 2 * it.w * it.h;
+    return sum;
+  };
+  return score('l') > score('p') * 1.05 ? 'l' : 'p';
+}
+
+function geometry(s, o) {
+  const W = o === 'l' ? 297 : 210, H = o === 'l' ? 210 : 297;
+  const m = s.margin, gap = 4;
+  const head = s.title ? 9 : 0;
+  const foot = s.pageno ? 7 : 0;
+  const cap = s.caption === 'none' ? 0 : 6;
+  const innerW = W - 2 * m, innerH = H - 2 * m - head - foot;
+  const cellW = (innerW - gap * (s.cols - 1)) / s.cols;
+  const slotH = (innerH - gap * (s.rows - 1)) / s.rows;
+  return { W, H, m, gap, head, foot, cap, cellW, cellH: slotH - cap, slotH };
+}
+
+function captionText(s, it, n) {
+  const d = fmtDate(it.time);
+  switch (s.caption) {
+    case 'num': return `${n}`;
+    case 'date': return d;
+    case 'numdate': return d ? `${n}　${d}` : `${n}`;
+    case 'name': return it.name;
+    default: return '';
+  }
+}
+
+async function renderPage(s, o, pageIndex, pageCount, scalePxPerMm) {
+  const g = geometry(s, o);
+  const c = document.createElement('canvas');
+  c.width = Math.round(g.W * scalePxPerMm); c.height = Math.round(g.H * scalePxPerMm);
+  const x = c.getContext('2d');
+  x.scale(scalePxPerMm, scalePxPerMm);
+  x.fillStyle = '#fff'; x.fillRect(0, 0, g.W, g.H);
+  x.fillStyle = '#111'; x.textBaseline = 'middle';
+  const font = mm => `${mm}px system-ui, -apple-system, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif`;
+  if (s.title) {
+    x.font = 'bold ' + font(4.6); x.textAlign = 'left';
+    x.fillText(s.title, g.m, g.m + 3, g.W - 2 * g.m);
+  }
+  const per = s.cols * s.rows;
+  const start = pageIndex * per;
+  for (let k = 0; k < per && start + k < items.length; k++) {
+    const it = items[start + k];
+    const col = k % s.cols, row = Math.floor(k / s.cols);
+    const cx = g.m + col * (g.cellW + g.gap);
+    const cy = g.m + g.head + row * (g.slotH + g.gap);
+    const r = Math.min(g.cellW / it.w, g.cellH / it.h);
+    const dw = it.w * r, dh = it.h * r;
+    const dx = cx + (g.cellW - dw) / 2, dy = cy + (g.cellH - dh) / 2;
+    const bmp = await decode(it.file);
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(src(bmp), dx, dy, dw, dh);
+    bmp.close && bmp.close();
+    if (s.border) { x.strokeStyle = '#999'; x.lineWidth = .25; x.strokeRect(dx, dy, dw, dh); }
+    const t = captionText(s, it, start + k + 1);
+    if (t) {
+      x.font = font(3.3); x.textAlign = 'center'; x.fillStyle = '#111';
+      x.fillText(t, cx + g.cellW / 2, cy + g.cellH + 3.2, g.cellW);
+    }
+  }
+  if (s.pageno) {
+    x.font = font(3.2); x.textAlign = 'center'; x.fillStyle = '#444';
+    x.fillText(`${pageIndex + 1} / ${pageCount}`, g.W / 2, g.H - g.m - 2.5);
+  }
+  return c;
+}
+
+let previewTimer = 0;
+function schedulePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(preview, 200); }
+
+async function preview() {
+  const token = ++renderToken;
+  const box = $('pages');
+  if (!items.length) { box.textContent = ''; $('printArea').textContent = ''; return; }
+  const s = settings(), o = chooseOrient(s);
+  const per = s.cols * s.rows, pageCount = Math.ceil(items.length / per);
+  $('pageCount').textContent = `A4${o === 'l' ? '横' : '縦'}・${pageCount}ページ`;
+  box.classList.toggle('land', o === 'l');
+  setStatus('仕上がりを作っています…');
+  const urls = [];
+  for (let p = 0; p < pageCount; p++) {
+    const c = await renderPage(s, o, p, pageCount, 1.6);
+    if (token !== renderToken) return;
+    urls.push(await new Promise(r => c.toBlob(b => r(URL.createObjectURL(b)), 'image/jpeg', .85)));
+  }
+  if (token !== renderToken) { urls.forEach(u => URL.revokeObjectURL(u)); return; }
+  pageUrls.forEach(u => URL.revokeObjectURL(u));
+  pageUrls = urls;
+  box.textContent = '';
+  urls.forEach((u, i) => { const im = new Image(); im.src = u; im.alt = `${i + 1}ページ目`; box.appendChild(im); });
+  setStatus('');
+}
+
+function setStatus(t) { $('status').textContent = t; }
+
+async function buildPages(onEach) {
+  const s = settings(), o = chooseOrient(s);
+  const per = s.cols * s.rows, pageCount = Math.ceil(items.length / per);
+  const scale = s.dpi / MM_PER_IN;
+  for (let p = 0; p < pageCount; p++) {
+    setStatus(`${p + 1} / ${pageCount} ページ目を作っています…`);
+    const c = await renderPage(s, o, p, pageCount, scale);
+    await onEach(c, o, p);
+    c.width = c.height = 0;
+  }
+  return o;
+}
+
+function busy(on) { $('print').disabled = $('pdf').disabled = on; }
+
+$('pdf').addEventListener('click', async () => {
+  if (!window.jspdf) { setStatus('PDFの部品を読み込めませんでした。通信状態を確かめて、もう一度押してください。「印刷する」からPDFに保存することもできます。'); return; }
+  busy(true);
+  try {
+    let doc = null;
+    await buildPages(async (c, o) => {
+      const data = c.toDataURL('image/jpeg', .9);
+      if (!doc) doc = new window.jspdf.jsPDF({ orientation: o === 'l' ? 'landscape' : 'portrait', unit: 'mm', format: 'a4', compress: true });
+      else doc.addPage('a4', o === 'l' ? 'landscape' : 'portrait');
+      const W = o === 'l' ? 297 : 210, H = o === 'l' ? 210 : 297;
+      doc.addImage(data, 'JPEG', 0, 0, W, H, undefined, 'FAST');
+    });
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    doc.save(`A4_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.pdf`);
+    setStatus('PDFを保存しました。');
+  } catch (e) {
+    setStatus('PDFを作れませんでした。画質を「標準」にするか、枚数を分けてお試しください。');
+  } finally { busy(false); }
+});
+
+$('print').addEventListener('click', async () => {
+  busy(true);
+  try {
+    const area = $('printArea');
+    area.querySelectorAll('img').forEach(im => URL.revokeObjectURL(im.src));
+    area.textContent = '';
+    const o = await buildPages(async c => {
+      const u = await new Promise(r => c.toBlob(b => r(URL.createObjectURL(b)), 'image/jpeg', .9));
+      const im = new Image(); im.src = u; area.appendChild(im);
+      await im.decode().catch(() => {});
+    });
+    area.classList.toggle('land', o === 'l');
+    $('pageSize').textContent = `@media print{@page{size:A4 ${o === 'l' ? 'landscape' : 'portrait'};margin:0}}`;
+    setStatus('印刷の画面で、用紙はA4・倍率は100%（等倍）を選んでください。');
+    setTimeout(() => window.print(), 50);
+  } catch (e) {
+    setStatus('印刷用の画像を作れませんでした。画質を「標準」にしてお試しください。');
+  } finally { busy(false); }
+});
+
+window.addEventListener('beforeprint', () => { if (!$('printArea').children.length) setStatus('「印刷する」ボタンから印刷してください。'); });
+</script>
+</body>
+</html>
